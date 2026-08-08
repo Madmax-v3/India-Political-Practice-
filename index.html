@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>India Political Map Practice</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #0f1115;
+    color: #f2f2f2;
+}
+
+.container {
+    width: min(1100px, 100%);
+    margin: auto;
+    padding: 18px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 18px;
+}
+
+header h1 {
+    margin: 0;
+    font-size: clamp(24px, 5vw, 38px);
+}
+
+header p {
+    margin: 7px 0 0;
+    color: #aeb4bf;
+    font-size: 14px;
+}
+
+.controls {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+input,
+button {
+    font: inherit;
+}
+
+input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #343942;
+    background: #191c22;
+    color: white;
+    outline: none;
+}
+
+input:focus {
+    border-color: #62d84e;
+}
+
+button {
+    padding: 11px 15px;
+    border-radius: 12px;
+    border: 1px solid #343942;
+    background: #191c22;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #242830;
+}
+
+button.active {
+    background: #62d84e;
+    color: #071007;
+    border-color: #62d84e;
+}
+
+.modebar,
+.filterbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+#quizPanel {
+    display: none;
+    padding: 15px;
+    margin-bottom: 12px;
+    border: 1px solid #343942;
+    border-radius: 16px;
+    background: #171a20;
+}
+
+.quizTop {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.quizLabel {
+    color: #9ea5b0;
+    font-size: 13px;
+}
+
+#question {
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 4px;
+}
+
+#score {
+    font-size: 20px;
+    font-weight: bold;
+    text-align: right;
+}
+
+#feedback {
+    margin-top: 10px;
+    min-height: 20px;
+    color: #aeb4bf;
+}
+
+.mapBox {
+    position: relative;
+    width: 100%;
+    border: 1px solid #343942;
+    border-radius: 18px;
+    background: #15181d;
+    overflow: hidden;
+}
+
+#map {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 420px;
+}
+
+.region {
+    fill: #20242b;
+    stroke: #858c97;
+    stroke-width: 1;
+    cursor: pointer;
+    transition:
+        fill 0.18s ease,
+        opacity 0.18s ease,
+        stroke-width 0.18s ease;
+}
+
+.region:hover {
+    fill: #334039;
+}
+
+.region.dimmed {
+    opacity: 0.12;
+}
+
+.region.selected {
+    fill: #62d84e;
+    stroke: #baffae;
+    stroke-width: 2.5;
+    animation: blink 0.45s ease-in-out 4;
+}
+
+.region.correct {
+    fill: #62d84e;
+    stroke: #baffae;
+    stroke-width: 2.5;
+}
+
+.region.wrong {
+    fill: #512c2c;
+}
+
+@keyframes blink {
+    0%, 100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.25;
+    }
+}
+
+.info {
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 190px;
+    max-width: 85%;
+    padding: 13px 18px;
+    text-align: center;
+    border-radius: 15px;
+    border: 1px solid #3b424d;
+    background: rgba(17, 20, 25, 0.94);
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 10;
+}
+
+.info.show {
+    opacity: 1;
+}
+
+#stateName {
+    font-size: 19px;
+    font-weight: bold;
+}
+
+#capital {
+    margin-top: 4px;
+    color: #aeb4bf;
+    font-size: 14px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.stat {
+    padding: 12px;
+    border: 1px solid #343942;
+    border-radius: 14px;
+    background: #171a20;
+}
+
+.statLabel {
+    color: #9299a5;
+    font-size: 12px;
+}
+
+.statValue {
+    margin-top: 4px;
+    font-size: 17px;
+    font-weight: bold;
+}
+
+.hint {
+    margin-top: 12px;
+    color: #858c97;
+    font-size: 12px;
+    text-align: center;
+}
+
+.loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #15181d;
+    color: #9da4af;
+    z-index: 20;
+}
+
+@media (max-width: 700px) {
+
+    .container {
+        padding: 12px;
+    }
+
+    .controls {
+        grid-template-columns: 1fr;
+    }
+
+    .controls button {
+        width: 100%;
+    }
+
+    #map {
+        min-height: 350px;
+    }
+
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .quizTop {
+        flex-direction: column;
+    }
+
+    #score {
+        text-align: left;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    <h1>India Political Map</h1>
+    <p>Interactive State & Union Territory Practice Tool</p>
+</header>
+
+<div class="controls">
+
+    <input
+        id="search"
+        type="search"
+        placeholder="Search a State or UT..."
+        autocomplete="off"
+    >
+
+    <button id="randomBtn">
+        Random
+    </button>
+
+    <button id="resetBtn">
+        Reset
+    </button>
+
+</div>
+
+<div class="modebar">
+
+    <button id="exploreBtn" class="active">
+        Explore Map
+    </button>
+
+    <button id="quizBtn">
+        Quiz Mode
+    </button>
+
+</div>
+
+<div class="filterbar">
+
+    <button id="allBtn" class="active">
+        States + UTs
+    </button>
+
+    <button id="statesBtn">
+        States Only
+    </button>
+
+    <button id="utsBtn">
+        UTs Only
+    </button>
+
+</div>
+
+<div id="quizPanel">
+
+    <div class="quizTop">
+
+        <div>
+            <div class="quizLabel">
+                Find this territory
+            </div>
+
+            <div id="question">
+                Press New Question
+            </div>
+        </div>
+
+        <div>
+            <div class="quizLabel">
+                Score
+            </div>
+
+            <div id="score">
+                0 / 0
+            </div>
+        </div>
+
+    </div>
+
+    <button id="newQuestion" style="margin-top:12px;">
+        New Question
+    </button>
+
+    <div id="feedback"></div>
+
+</div>
+
+<div class="mapBox">
+
+    <div id="loading" class="loading">
+        Loading India map...
+    </div>
+
+    <svg
+        id="map"
+        viewBox="0 0 1000 1100"
+        role="img"
+        aria-label="Interactive political map of India">
+    </svg>
+
+    <div id="info" class="info">
+
+        <div id="stateName"></div>
+
+        <div id="capital"></div>
+
+    </div>
+
+</div>
+
+<div class="stats">
+
+    <div class="stat">
+        <div class="statLabel">States</div>
+        <div class="statValue">28</div>
+    </div>
+
+    <div class="stat">
+        <div class="statLabel">Union Territories</div>
+        <div class="statValue">8</div>
+    </div>
+
+    <div class="stat">
+        <div class="statLabel">Selected</div>
+        <div id="selected" class="statValue">—</div>
+    </div>
+
+    <div class="stat">
+        <div class="statLabel">Mode</div>
+        <div id="mode" class="statValue">Explore</div>
+    </div>
+
+</div>
+
+<div class="hint">
+    Tap any territory to identify it. Use Quiz Mode for practice.
+</div>
+
+</div>
+
+<script type="module">
+
+import India from
+"https://cdn.jsdelivr.net/npm/@svg-maps/india@2.0.0/+esm";
+
+
+/* =========================
+   CAPITAL DATABASE
+========================= */
+
+const capitals = {
+
+    "Andhra Pradesh": "Amaravati",
+    "Arunachal Pradesh": "Itanagar",
+    "Assam": "Dispur",
+    "Bihar": "Patna",
+    "Chhattisgarh": "Raipur",
+    "Goa": "Panaji",
+    "Gujarat": "Gandhinagar",
+    "Haryana": "Chandigarh",
+    "Himachal Pradesh": "Shimla",
+    "Jharkhand": "Ranchi",
+    "Karnataka": "Bengaluru",
+    "Kerala": "Thiruvananthapuram",
+    "Madhya Pradesh": "Bhopal",
+    "Maharashtra": "Mumbai",
+    "Manipur": "Imphal",
+    "Meghalaya": "Shillong",
+    "Mizoram": "Aizawl",
+    "Nagaland": "Kohima",
+    "Odisha": "Bhubaneswar",
+    "Punjab": "Chandigarh",
+    "Rajasthan": "Jaipur",
+    "Sikkim": "Gangtok",
+    "Tamil Nadu": "Chennai",
+    "Telangana": "Hyderabad",
+    "Tripura": "Agartala",
+    "Uttar Pradesh": "Lucknow",
+    "Uttarakhand": "Dehradun",
+    "West Bengal": "Kolkata",
+
+    "Andaman and Nicobar Islands": "Port Blair",
+    "Chandigarh": "Chandigarh",
+    "Dadra and Nagar Haveli and Daman and Diu": "Daman",
+    "Delhi": "New Delhi",
+    "Jammu and Kashmir": "Srinagar / Jammu",
+    "Ladakh": "Leh",
+    "Lakshadweep": "Kavaratti",
+    "Puducherry": "Puducherry"
+
+};
+
+
+/* =========================
+   STATES
+========================= */
+
+const states = new Set([
+
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
+    "Bihar",
+    "Chhattisgarh",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal"
+
+]);
+
+
+/* =========================
+   UNION TERRITORIES
+========================= */
+
+const uts = new Set([
+
+    "Andaman and Nicobar Islands",
+    "Chandigarh",
+    "Dadra and Nagar Haveli and Daman and Diu",
+    "Delhi",
+    "Jammu and Kashmir",
+    "Ladakh",
+    "Lakshadweep",
+    "Puducherry"
+
+]);
+
+
+/* =========================
+   ELEMENTS
+========================= */
+
+const svg = document.getElementById("map");
+
+const loading = document.getElementById("loading");
+
+const info = document.getElementById("info");
+
+const stateName =
+document.getElementById("stateName");
+
+const capital =
+document.getElementById("capital");
+
+const search =
+document.getElementById("search");
+
+const selected =
+document.getElementById("selected");
+
+const modeText =
+document.getElementById("mode");
+
+const quizPanel =
+document.getElementById("quizPanel");
+
+const question =
+document.getElementById("question");
+
+const score =
+document.getElementById("score");
+
+const feedback =
+document.getElementById("feedback");
+
+
+/* =========================
+   BUTTONS
+========================= */
+
+const exploreBtn =
+document.getElementById("exploreBtn");
+
+const quizBtn =
+document.getElementById("quizBtn");
+
+const allBtn =
+document.getElementById("allBtn");
+
+const statesBtn =
+document.getElementById("statesBtn");
+
+const utsBtn =
+document.getElementById("utsBtn");
+
+const randomBtn =
+document.getElementById("randomBtn");
+
+const resetBtn =
+document.getElementById("resetBtn");
+
+const newQuestionBtn =
+document.getElementById("newQuestion");
+
+
+/* =========================
+   VARIABLES
+========================= */
+
+let regions = [];
+
+let currentMode = "explore";
+
+let currentFilter = "all";
+
+let quizTarget = null;
+
+let correctAnswers = 0;
+
+let attempts = 0;
+
+let infoTimer;
+
+
+/* =========================
+   SVG SETUP
+========================= */
+
+svg.setAttribute(
+    "viewBox",
+    India.viewBox
+);
+
+
+/* =========================
+   NAME NORMALIZATION
+========================= */
+
+function normalize(name) {
+
+    const aliases = {
+
+        "Orissa": "Odisha",
+
+        "Pondicherry": "Puducherry",
+
+        "Dadra and Nagar Haveli":
+        "Dadra and Nagar Haveli and Daman and Diu",
+
+        "Daman and Diu":
+        "Dadra and Nagar Haveli and Daman and Diu"
+
+    };
+
+    return aliases[name] || name;
+}
+
+
+/* =========================
+   CREATE MAP
+========================= */
+
+India.locations.forEach(location => {
+
+    const path =
+    document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "path"
+    );
+
+    path.setAttribute(
+        "d",
+        location.path
+    );
+
+    path.classList.add("region");
+
+    const name =
+    normalize(location.name);
+
+    path.setAttribute(
+        "aria-label",
+        name
+    );
+
+    path.setAttribute(
+        "role",
+        "button"
+    );
+
+    path.setAttribute(
+        "tabindex",
+        "0"
+    );
+
+    const region = {
+
+        name: name,
+
+        element: path
+
+    };
+
+    regions.push(region);
+
+    svg.appendChild(path);
+
+
+    /* Mouse / Touch */
+
+    path.addEventListener(
+        "click",
+        () => handleSelection(region)
+    );
+
+
+    /* Keyboard */
+
+    path.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key === "Enter" ||
+                event.key === " "
+            ) {
+
+                event.preventDefault();
+
+                handleSelection(region);
+
+            }
+
+        }
+    );
+
+});
+
+
+loading.remove();
+
+
+/* =========================
+   CLEAR MAP
+========================= */
+
+function clearMap() {
+
+    regions.forEach(region => {
+
+        region.element.classList.remove(
+            "selected",
+            "correct",
+            "wrong",
+            "dimmed"
+        );
+
+    });
+
+}
+
+
+/* =========================
+   SHOW INFORMATION
+========================= */
+
+function showInformation(name) {
+
+    clearTimeout(infoTimer);
+
+    stateName.textContent = name;
+
+    capital.textContent =
+    "Capital: " +
+    (capitals[name] || "Not available");
+
+    selected.textContent = name;
+
+    info.classList.add("show");
+
+    infoTimer = setTimeout(() => {
+
+        info.classList.remove("show");
+
+    }, 3000);
+
+}
+
+
+/* =========================
+   HANDLE MAP CLICK
+========================= */
+
+function handleSelection(region) {
+
+    const name = region.name;
+
+
+    /* QUIZ MODE */
+
+    if (
+        currentMode === "quiz" &&
+        quizTarget
+    ) {
+
+        attempts++;
+
+        clearMap();
+
+
+        if (name === quizTarget) {
+
+            correctAnswers++;
+
+            region.element.classList.add(
+                "correct"
+            );
+
+            feedback.textContent =
+            "Correct! " +
+            name +
+            " • Capital: " +
+            capitals[name];
+
+            showInformation(name);
+
+            updateScore();
+
+            setTimeout(
+                newQuestion,
+                1000
+            );
+
+        }
+
+        else {
+
+            region.element.classList.add(
+                "wrong"
+            );
+
+            const correctRegion =
+            regions.find(
+                r => r.name === quizTarget
+            );
+
+            if (correctRegion) {
+
+                correctRegion.element.classList.add(
+                    "correct"
+                );
+
+            }
+
+            feedback.textContent =
+            "Wrong. Find " +
+            quizTarget +
+            ".";
+
+            updateScore();
+
+        }
+
+        return;
+    }
+
+
+    /* NORMAL MODE */
+
+    clearMap();
+
+    region.element.classList.add(
+        "selected"
+    );
+
+    showInformation(name);
+
+}
+
+
+/* =========================
+   FILTER
+========================= */
+
+function applyFilter() {
+
+    const query =
+    search.value
+    .trim()
+    .toLowerCase();
+
+
+    regions.forEach(region => {
+
+        const name =
+        region.name
+        .toLowerCase();
+
+
+        const matchesSearch =
+        !query ||
+        name.includes(query);
+
+
+        let matchesFilter = true;
+
+
+        if (currentFilter === "states") {
+
+            matchesFilter =
+            states.has(region.name);
+
+        }
+
+
+        if (currentFilter === "uts") {
+
+            matchesFilter =
+            uts.has(region.name);
+
+        }
+
+
+        if (
+            matchesSearch &&
+            matchesFilter
+        ) {
+
+            region.element.classList.remove(
+                "dimmed"
+            );
+
+        }
+
+        else {
+
+            region.element.classList.add(
+                "dimmed"
+            );
+
+        }
+
+    });
+
+}
+
+
+/* =========================
+   SEARCH
+========================= */
+
+search.addEventListener(
+    "input",
+    applyFilter
+);
+
+
+search.addEventListener(
+    "keydown",
+    event => {
+
+        if (event.key !== "Enter") {
+            return;
+        }
+
+        const query =
+        search.value
+        .trim()
+        .toLowerCase();
+
+        if (!query) {
+            return;
+        }
+
+        const match =
+        regions.find(
+            region =>
+            region.name.toLowerCase() === query
+        ) ||
+        regions.find(
+            region =>
+            region.name
+            .toLowerCase()
+            .includes(query)
+        );
+
+        if (match) {
+
+            clearMap();
+
+            match.element.classList.add(
+                "selected"
+            );
+
+            showInformation(
+                match.name
+            );
+
+        }
+
+    }
+);
+
+
+/* =========================
+   RANDOM
+========================= */
+
+randomBtn.addEventListener(
+    "click",
+    () => {
+
+        const available =
+        regions.filter(region => {
+
+            if (
+                currentFilter === "states"
+            ) {
+
+                return states.has(
+                    region.name
+                );
+
+            }
+
+            if (
+                currentFilter === "uts"
+            ) {
+
+                return uts.has(
+                    region.name
+                );
+
+            }
+
+            return true;
+
+        });
+
+
+        if (!available.length) {
+            return;
+        }
+
+
+        const random =
+        available[
+            Math.floor(
+                Math.random() *
+                available.length
+            )
+        ];
+
+
+        clearMap();
+
+        random.element.classList.add(
+            "selected"
+        );
+
+        showInformation(
+            random.name
+        );
+
+    }
+);
+
+
+/* =========================
+   RESET
+========================= */
+
+resetBtn.addEventListener(
+    "click",
+    () => {
+
+        search.value = "";
+
+        currentFilter = "all";
+
+        clearMap();
+
+        info.classList.remove(
+            "show"
+        );
+
+        selected.textContent = "—";
+
+        applyFilter();
+
+    }
+);
+
+
+/* =========================
+   FILTER BUTTONS
+========================= */
+
+function activateFilter(button) {
+
+    [
+        allBtn,
+        statesBtn,
+        utsBtn
+    ].forEach(
+        btn =>
+        btn.classList.remove("active")
+    );
+
+    button.classList.add("active");
+
+}
+
+
+allBtn.addEventListener(
+    "click",
+    () => {
+
+        currentFilter = "all";
+
+        activateFilter(allBtn);
+
+        applyFilter();
+
+    }
+);
+
+
+statesBtn.addEventListener(
+    "click",
+    () => {
+
+        currentFilter = "states";
+
+        activateFilter(statesBtn);
+
+        applyFilter();
+
+    }
+);
+
+
+utsBtn.addEventListener(
+    "click",
+    () => {
+
+        currentFilter = "uts";
+
+        activateFilter(utsBtn);
+
+        applyFilter();
+
+    }
+);
+
+
+/* =========================
+   EXPLORE MODE
+========================= */
+
+exploreBtn.addEventListener(
+    "click",
+    () => {
+
+        currentMode = "explore";
+
+        modeText.textContent =
+        "Explore";
+
+        exploreBtn.classList.add(
+            "active"
+        );
+
+        quizBtn.classList.remove(
+            "active"
+        );
+
+        quizPanel.style.display =
+        "none";
+
+        clearMap();
+
+        feedback.textContent = "";
+
+    }
+);
+
+
+/* =========================
+   QUIZ MODE
+========================= */
+
+quizBtn.addEventListener(
+    "click",
+    () => {
+
+        currentMode = "quiz";
+
+        modeText.textContent =
+        "Quiz";
+
+        quizBtn.classList.add(
+            "active"
+        );
+
+        exploreBtn.classList.remove(
+            "active"
+        );
+
+        quizPanel.style.display =
+        "block";
+
+        newQuestion();
+
+    }
+);
+
+
+/* =========================
+   NEW QUESTION
+========================= */
+
+function newQuestion() {
+
+    const available =
+    regions.filter(region => {
+
+        if (
+            currentFilter === "states"
+        ) {
+
+            return states.has(
+                region.name
+            );
+
+        }
+
+        if (
+            currentFilter === "uts"
+        ) {
+
+            return uts.has(
+                region.name
+            );
+
+        }
+
+        return (
+            states.has(region.name) ||
+            uts.has(region.name)
+        );
+
+    });
+
+
+    if (!available.length) {
+        return;
+    }
+
+
+    clearMap();
+
+    const random =
+    available[
+        Math.floor(
+            Math.random() *
+            available.length
+        )
+    ];
+
+
+    quizTarget =
+    random.name;
+
+
+    question.textContent =
+    "Locate " +
+    quizTarget;
+
+
+    feedback.textContent = "";
+
+}
+
+
+/* =========================
+   SCORE
+========================= */
+
+func
